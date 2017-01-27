@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Given a full python version (e.g. "3.3.5")
+# Given a full python version (e.g. "pysetup.sh 3.3.5")
 #
-# Download Python source
+# Download Python source from python.org,
 # unpack it, compile it, install it.
 #
 # Install setuptools,
@@ -27,7 +27,7 @@ PREVIOUS=$(find ${INSTALL_PREFIX} -name "python${PYVER}*" | tr '\n' ',' )
 if [ -n "${PREVIOUS}" ]; then
   set +x
   echo "Warning: Traces of a previously installed Python ${PYVER} found:"
-  echo -e "$(echo \"${PREVIOUS}\" | tr ',' '\n')"
+  echo -e "$(echo ${PREVIOUS} | tr ',' '\n')"
   exit 1
 fi
 
