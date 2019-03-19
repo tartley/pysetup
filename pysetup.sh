@@ -10,14 +10,15 @@
 # use that to install virtualenvwrapper.
 # (these last three steps will be unecessary for Python 3.4 and above)
 
+set -u # fail in uninitialized variables
+set -e # exit on first error
+set -x # echo commands with expanded variables
+
 PYLONGVER=$1
 if [ -z ${PYLONGVER} ]; then
     echo "usage: $0 PYVER # e.g. 3.2.1"
     exit
 fi
-
-set -e # exit on first error
-set -x # echo commands with expanded variables
 
 PYVER=${PYLONGVER:0:3} # e.g. 3.2
 INSTALL_PREFIX=/usr/local
@@ -44,17 +45,60 @@ if [ ${PYVER:0:1} == "3" ]; then
 else
     PACKAGENAME=python
 fi
-sudo apt build-dep -qq $PACKAGENAME
-sudo apt install -qq build-essential bzip2 libbz2-dev libc6-dev libgdbm-dev liblzma-dev libncursesw5-dev libreadline-dev libsqlite3-dev libssl-dev libz-dev openssl tk-dev
 
-# tk8.6-dev (needed by Python3.4.2, is default for Ubuntu 14.04)
+if hash apt 2>/dev/null; then
+    # Ubuntu/Debian
+    sudo apt build-dep -qq $PACKAGENAME
+    sudo apt install -qq \
+        build-essential \
+        bzip2 \
+        libbz2-dev \
+        libc6-dev \
+        libffi-dev \
+        libgdbm-dev \
+        liblzma-dev \
+        libncursesw5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libz-dev \
+        openssl \
+        tk-dev \
+
+else
+    # RHEL
+    # skip-broken because I haver a conflicting, newer git from elsewhere
+    sudo yum groupinstall 'Development Tools' -q -y --skip-broken
+    sudo yum install -q -y \
+        bzip2-devel \
+        gcc \
+        gcc-c++ \
+        gdbm-devel \
+        glibc-devel \
+        libffi-devel \
+        libuuid-devel \
+        make \
+        ncurses-devel \
+        openssl-devel \
+        readline-devel \
+        sqlite-devel \
+        tk-devel \
+        xz-devel \
+        zlib2-devel \
+        zlib-devel \
+
+fi
+# omitted from serverfault answer because they seem wrong to me:
+# python-devel openssl-perl libjpeg-turbo libjpeg-turbo-devel giflib tkinter tk kernel-headers glibc libpng wget
+
+# tk8.6-dev (needed by Python3.4.2, is included by default for Ubuntu 14.04)
 # libreadline5-dev
 # sqlite3
 
 # if Python source isn't already downloaded
 if [ ! -f Python-${PYLONGVER}.tar.xz ]; then
     echo "> Downloading..."
-    wget http://www.python.org/ftp/python/${PYLONGVER}/Python-${PYLONGVER}.tar.xz
+    wget --progress=bar:force http://www.python.org/ftp/python/${PYLONGVER}/Python-${PYLONGVER}.tar.xz
 fi
 
 # if Python source isn't already unpacked
