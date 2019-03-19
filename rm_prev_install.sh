@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
+set -e # exit on first error
+# set -x # echo commands with expanded variables
+
 PYLONGVER=$1
 if [ -z ${PYLONGVER} ]; then
     echo "usage: $0 PYVER # e.g. 3.2.1"
     exit
 fi
-
-set -e # exit on first error
-set -x # echo commands with expanded variables
 
 PYVER=${PYLONGVER:0:3} # e.g. 3.2
 INSTALL_PREFIX=/usr/local

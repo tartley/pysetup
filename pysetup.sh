@@ -39,7 +39,7 @@ cd $ROOT
 
 # install prereqs
 
-echo "> Installing prerequisite dependencies..."
+echo "> Installing prerequisites..."
 if [ ${PYVER:0:1} == "3" ]; then
     PACKAGENAME=python3
 else
@@ -49,7 +49,7 @@ fi
 if hash apt 2>/dev/null; then
     # Ubuntu/Debian
     sudo apt build-dep -qq $PACKAGENAME
-    sudo apt install -qq \
+    sudo apt install \
         build-essential \
         bzip2 \
         libbz2-dev \
@@ -64,29 +64,30 @@ if hash apt 2>/dev/null; then
         libz-dev \
         openssl \
         tk-dev \
-
+        -qq
 else
     # RHEL
     # skip-broken because I haver a conflicting, newer git from elsewhere
-    sudo yum groupinstall 'Development Tools' -q -y --skip-broken
-    sudo yum install -q -y \
-        bzip2-devel \
-        gcc \
-        gcc-c++ \
-        gdbm-devel \
-        glibc-devel \
-        libffi-devel \
-        libuuid-devel \
-        make \
-        ncurses-devel \
-        openssl-devel \
-        readline-devel \
-        sqlite-devel \
-        tk-devel \
-        xz-devel \
-        zlib2-devel \
-        zlib-devel \
-
+    # sudo yum groupinstall 'Development Tools' -q -y --skip-broken
+    # sudo yum install \
+    #     bzip2-devel \
+    #     gcc \
+    #     gcc-c++ \
+    #     gdbm-devel \
+    #     glibc-devel \
+    #     libffi-devel \
+    #     libuuid-devel \
+    #     make \
+    #     ncurses-devel \
+    #     openssl-devel \
+    #     readline-devel \
+    #     sqlite-devel \
+    #     tk-devel \
+    #     xz-devel \
+    #     zlib2-devel \
+    #     zlib-devel \
+    #     -q -y
+    echo "> TODO commented out prereqs ***************************************"
 fi
 # omitted from serverfault answer because they seem wrong to me:
 # python-devel openssl-perl libjpeg-turbo libjpeg-turbo-devel giflib tkinter tk kernel-headers glibc libpng wget
@@ -95,58 +96,71 @@ fi
 # libreadline5-dev
 # sqlite3
 
+#############################################################
 # if Python source isn't already downloaded
-if [ ! -f Python-${PYLONGVER}.tar.xz ]; then
-    echo "> Downloading..."
-    wget --progress=bar:force http://www.python.org/ftp/python/${PYLONGVER}/Python-${PYLONGVER}.tar.xz
+downloadname="Python-${PYLONGVER}.tar.xz"
+echo "> Downloading $downloadname"
+if [ ! -f "$downloadname" ]; then
+    wget --progress=bar:force http://www.python.org/ftp/python/${PYLONGVER}/$downloadname
+else
+    echo "skipping"
 fi
 
+#############################################################
 # if Python source isn't already unpacked
+echo "> Unpacking..."
 if [ ! -d Python-${PYLONGVER} ]; then
-    echo "> Unpacking..."
     tar --checkpoint-action="dot" -xJf Python-${PYLONGVER}.tar.xz
     echo
+else
+    echo "skipping"
 fi
 PYSRC=${ROOT}/Python-${PYLONGVER}
 
+#############################################################
+echo "> Configuring..."
 cd $PYSRC
-# if no ./python executable exists
-if [ ! -f python ]; then
-    echo "> Configuring..."
-    # --enable-shared and LDFLAGS
+
+pyinstaller_flags=""
+if [ -n "${PYINSTALLER+x}" ] ; then
+    # --enable-shared and LDFLAGS:
     #   To allow PyInstaller to find .so libs.
-    # prefix
-    #   To specify install location
-    # --build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu
+    # --build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu:
     #   to cross compile 32 bit output from 64 bit host
     #   32 bit Python is required for PyInstaller to generate 32 bit output,
     #   which will run on both 32 bit and 64 bit machines.
-    ./configure \
+    pyinstaller_flags="\
         --enable-shared \
-        LDFLAGS="-Wl,--rpath=${INSTALL_PREFIX}/lib" \
-        prefix=${INSTALL_PREFIX}
-    echo "> Compiling..."
-    # 'altinstall': Prevents the creation of suffixless 'python' symlinking
-    # to python3.5, and similar things for shared libs, man pages, etc.
-    # 'sudo' because altinstall creates some dirs in $INSTALL_PREFIX :-(
-    time sudo make -s -j4 altinstall
+        --build=x86_64-pc-linux-gnu \
+        --host=i686-pc-linux-gnu \
+        LDFLAGS=-Wl,--rpath=${INSTALL_PREFIX}/lib \
+    "
 fi
 
-# If this version of Python isn't already installed
-if [ "$(${INSTALL_PREFIX}/bin/python${PYVER} --version)" != "Python ${PYLONGVER}" ]; then
-    echo "> Installing to ${INSTALL_PREFIX}"
-    sudo make install
-fi
+./configure \
+    --quiet \
+    prefix=${INSTALL_PREFIX} \
+    $pyinstaller_flags
+# Recommended for release builds, but adds a 30-minute profiling step:
+#   --enable-optimizations \
 
-cd ..
+#############################################################
+echo "> Compiling..."
+time make -s -j4
 
-# if virtualenvwrapper isn't installed
-if [ ! virtualenvwrapper-${PYVER} >/dev/null ]; then
-    echo "> Installing virtualenvwrapper..."
-    sudo pip${PYVER} install virtualenvwrapper
+#############################################################
+echo "> Installing to ${INSTALL_PREFIX}"
+# 'altinstall': Prevents the creation of suffixless 'python' symlinking
+# to pythonX.Y, and similar things for shared libs, man pages, etc.
+sudo make -s altinstall >/tmp/python-altinstall.out
+
+#############################################################
+echo "> Installing virtualenvwrapper-${PYVER}..."
+if [ virtualenvwrapper-${PYVER} >/dev/null ]; then
+    python${PYVER} -m pip install --user virtualenvwrapper
 fi
 
 # No need to install setuptools, it's built-in since Python3.4
-# No need to install virtualenv, it's built in to recent Pythons as pyvenv
+# No need to install virtualenv, it's built in to recent Pythons as "-m venv"
 # No need to install pip, it's built in to recent Pythons, and each virtualenv
 
