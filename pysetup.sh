@@ -44,8 +44,15 @@ if [ ${PYVER:0:1} == "3" ]; then
 else
     PACKAGENAME=python
 fi
-sudo apt build-dep -qq $PACKAGENAME
-sudo apt install -qq build-essential bzip2 libbz2-dev libc6-dev libgdbm-dev liblzma-dev libncursesw5-dev libreadline-dev libsqlite3-dev libssl-dev libz-dev openssl tk-dev
+
+if hash apt 2>/dev/null; then
+    # apt systems
+    sudo apt build-dep -qq $PACKAGENAME
+    sudo apt install -qq build-essential bzip2 libbz2-dev libc6-dev libgdbm-dev liblzma-dev libncursesw5-dev libreadline-dev libsqlite3-dev libssl-dev libz-dev openssl tk-dev libffi-dev
+else
+    # fallback to yum
+    sudo yum install -q -y gcc gcc-c++ glibc-devel make openssl-devel bzip2-devel libffi-devel libuuid-devel
+fi
 
 # tk8.6-dev (needed by Python3.4.2, is default for Ubuntu 14.04)
 # libreadline5-dev
