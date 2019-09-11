@@ -61,7 +61,7 @@ fi
 # if Python source isn't already downloaded
 if [ ! -f Python-${PYLONGVER}.tar.xz ]; then
     echo "> Downloading..."
-    wget http://www.python.org/ftp/python/${PYLONGVER}/Python-${PYLONGVER}.tar.xz
+    wget --progress=bar:force http://www.python.org/ftp/python/${PYLONGVER}/Python-${PYLONGVER}.tar.xz
 fi
 
 # if Python source isn't already unpacked
