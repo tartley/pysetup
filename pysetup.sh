@@ -50,12 +50,13 @@ if hash apt 2>/dev/null; then
     # Ubuntu/Debian
     sudo apt build-dep -qq $PACKAGENAME
     sudo apt install \
+        -y -qq \
         build-essential \
         bzip2 \
         libbz2-dev \
         libc6-dev \
         libffi-dev \
-        libgdbm-dev \
+        libgdbm-compat-dev \
         liblzma-dev \
         libncursesw5-dev \
         libreadline-dev \
@@ -63,8 +64,7 @@ if hash apt 2>/dev/null; then
         libssl-dev \
         libz-dev \
         openssl \
-        tk-dev \
-        -qq
+        tk-dev
 else
     # RHEL
     sudo yum groupinstall 'Development Tools' -q -y --skip-broken
@@ -88,11 +88,12 @@ else
         -q -y
 fi
 # omitted from serverfault answer because they seem wrong to me:
-# python-devel openssl-perl libjpeg-turbo libjpeg-turbo-devel giflib tkinter tk kernel-headers glibc libpng wget
+# python-devel openssl-perl libjpeg-turbo libjpeg-turbo-devel giflib
+# tkinter tk kernel-headers glibc libpng wget
 
 # tk8.6-dev (needed by Python3.4.2, is included by default for Ubuntu 14.04)
-# libreadline5-dev
-# sqlite3
+# libreadline5-dev (readline at REPL works without this. Also, newer versions exist)
+# sqlite3 (perhaps only needed at runtime?)
 
 #############################################################
 # if Python source isn't already downloaded
@@ -137,6 +138,7 @@ fi
 
 ./configure \
     --quiet \
+    --enable-optimizations \
     prefix=${INSTALL_PREFIX} \
     $pyinstaller_flags
 # Recommended for release builds, but adds a 30-minute profiling step:
