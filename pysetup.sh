@@ -12,7 +12,7 @@
 
 set -u # fail in uninitialized variables
 set -e # exit on first error
-set -x # echo commands with expanded variables
+# set -x # echo commands with expansions done
 
 PYLONGVER=$1
 if [ -z ${PYLONGVER} ]; then
@@ -96,7 +96,6 @@ fi
 # sqlite3 (perhaps only needed at runtime?)
 
 #############################################################
-# if Python source isn't already downloaded
 downloadname="Python-${PYLONGVER}.tar.xz"
 echo "> Downloading $downloadname"
 if [ ! -f "$downloadname" ]; then
@@ -106,7 +105,6 @@ else
 fi
 
 #############################################################
-# if Python source isn't already unpacked
 echo "> Unpacking..."
 if [ ! -d Python-${PYLONGVER} ]; then
     tar --checkpoint-action="dot" -xJf Python-${PYLONGVER}.tar.xz
