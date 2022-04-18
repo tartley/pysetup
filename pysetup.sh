@@ -20,7 +20,10 @@ if [ -z ${PYLONGVER} ]; then
     exit
 fi
 
-PYVER=${PYLONGVER:0:3} # e.g. 3.2
+# convert given 3.x.y to 3.x
+IFS='.' read -ra version_array <<< "$PYLONGVER"
+PYVER="${version_array[0]}.${version_array[1]}"
+
 INSTALL_PREFIX=/usr/local
 
 # Refuse to run if this same Python ${PYVER} is already installed

@@ -9,7 +9,8 @@ if [ -z ${PYLONGVER} ]; then
     exit
 fi
 
-PYVER=${PYLONGVER:0:3} # e.g. 3.2
+IFS='.' read -ra version_array <<< "$PYLONGVER"
+PYVER="${version_array[0]}.${version_array[1]}" # e.g. 3.2
 INSTALL_PREFIX=/usr/local
 
 # Delete vestiges of any previous install that we can find
