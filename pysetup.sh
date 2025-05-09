@@ -35,12 +35,16 @@ if [ -n "${PREVIOUS}" ]; then
   exit 1
 fi
 
-ROOT=~/scratch/Python
+ROOT=/tmp/Python
 
 mkdir -p $ROOT
 cd $ROOT
 
 # install prereqs
+
+# TODO: Update this section to match
+# https://devguide.python.org/getting-started/setup-building/#build-dependencies
+# TODO: Delete Python2 paths
 
 echo "> Installing prerequisites..."
 if [ ${PYVER:0:1} == "3" ]; then
@@ -56,6 +60,7 @@ if hash apt 2>/dev/null; then
         -y -qq \
         build-essential \
         bzip2 \
+        gdb \
         libbz2-dev \
         libc6-dev \
         libffi-dev \
@@ -66,8 +71,10 @@ if hash apt 2>/dev/null; then
         libsqlite3-dev \
         libssl-dev \
         libz-dev \
+        nis \
         openssl \
         tk-dev
+
 else
     # RHEL
     sudo yum groupinstall 'Development Tools' -q -y --skip-broken
@@ -121,33 +128,38 @@ PYSRC=${ROOT}/Python-${PYLONGVER}
 echo "> Configuring..."
 cd $PYSRC
 
-pyinstaller_flags=""
-if [ -n "${PYINSTALLER+x}" ] ; then
+config_flags="\
+--quiet \
+--enable-optimizations \
+prefix=${INSTALL_PREFIX} \
+"
+# Recommended for release builds, but adds a 30-minute profiling step:
+# --enable-optimizations \
+
+if [ -v PYINSTALLER ] ; then
     # --enable-shared and LDFLAGS:
     #   To allow PyInstaller to find .so libs.
     # --build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu:
     #   to cross compile 32 bit output from 64 bit host
     #   32 bit Python is required for PyInstaller to generate 32 bit output,
     #   which will run on both 32 bit and 64 bit machines.
-    pyinstaller_flags="\
-        --enable-shared \
-        --build=x86_64-pc-linux-gnu \
-        --host=i686-pc-linux-gnu \
-        LDFLAGS=-Wl,--rpath=${INSTALL_PREFIX}/lib \
-    "
+    #   TODO Drop the 32 bit, surely? Or drop the whole thing?
+    #   Or make it conditional and switched off?
+    config_flags+="\
+--enable-shared \
+--build=x86_64-pc-linux-gnu \
+--host=i686-pc-linux-gnu \
+LDFLAGS=-Wl,--rpath=${INSTALL_PREFIX}/lib \
+"
+
 fi
 
-./configure \
-    --quiet \
-    --enable-optimizations \
-    prefix=${INSTALL_PREFIX} \
-    $pyinstaller_flags
-# Recommended for release builds, but adds a 30-minute profiling step:
-#   --enable-optimizations \
+./configure $config_flags
 
 #############################################################
 echo "> Compiling..."
-time make -s -j4
+time make -s -j6
+# value of 6 measured as "best", see spreadsheet in this dir
 
 #############################################################
 echo "> Installing to ${INSTALL_PREFIX}"
@@ -155,13 +167,8 @@ echo "> Installing to ${INSTALL_PREFIX}"
 # to pythonX.Y, and similar things for shared libs, man pages, etc.
 sudo make -s altinstall >/tmp/python-altinstall.out
 
-#############################################################
-echo "> Installing virtualenvwrapper-${PYVER}..."
-if [ virtualenvwrapper-${PYVER} >/dev/null ]; then
-    python${PYVER} -m pip install --user virtualenvwrapper
-fi
-
 # No need to install setuptools, it's built-in since Python3.4
 # No need to install virtualenv, it's built in to recent Pythons as "-m venv"
-# No need to install pip, it's built in to recent Pythons, and each virtualenv
+# No need to install pip, it's built in to each virtualenv
+# No need to install virtualenvwrapper. Use ve & workon.
 
