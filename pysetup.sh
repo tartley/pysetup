@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 #
+###################################################
+## Consider deprecating this script and using uv ##
+## to manage installed python versions instead.  ##
+###################################################
+#
 # Given a full python version (e.g. "pysetup.sh 3.3.5")
 #
 # Download Python source from python.org,
@@ -41,10 +46,6 @@ mkdir -p $ROOT
 cd $ROOT
 
 # install prereqs
-
-# TODO: Update this section to match
-# https://devguide.python.org/getting-started/setup-building/#build-dependencies
-# TODO: Delete Python2 paths
 
 echo "> Installing prerequisites..."
 if [ ${PYVER:0:1} == "3" ]; then
@@ -97,13 +98,6 @@ else
         zlib-devel \
         -q -y
 fi
-# omitted from serverfault answer because they seem wrong to me:
-# python-devel openssl-perl libjpeg-turbo libjpeg-turbo-devel giflib
-# tkinter tk kernel-headers glibc libpng wget
-
-# tk8.6-dev (needed by Python3.4.2, is included by default for Ubuntu 14.04)
-# libreadline5-dev (readline at REPL works without this. Also, newer versions exist)
-# sqlite3 (perhaps only needed at runtime?)
 
 #############################################################
 downloadname="Python-${PYLONGVER}.tar.xz"
@@ -133,9 +127,6 @@ config_flags="\
 --enable-optimizations \
 prefix=${INSTALL_PREFIX} \
 "
-# Recommended for release builds, but adds a 30-minute profiling step:
-# --enable-optimizations \
-
 if [ -v PYINSTALLER ] ; then
     # --enable-shared and LDFLAGS:
     #   To allow PyInstaller to find .so libs.
@@ -143,8 +134,6 @@ if [ -v PYINSTALLER ] ; then
     #   to cross compile 32 bit output from 64 bit host
     #   32 bit Python is required for PyInstaller to generate 32 bit output,
     #   which will run on both 32 bit and 64 bit machines.
-    #   TODO Drop the 32 bit, surely? Or drop the whole thing?
-    #   Or make it conditional and switched off?
     config_flags+="\
 --enable-shared \
 --build=x86_64-pc-linux-gnu \
@@ -153,6 +142,8 @@ LDFLAGS=-Wl,--rpath=${INSTALL_PREFIX}/lib \
 "
 
 fi
+
+echo "Configure flags: $config_flags"
 
 ./configure $config_flags
 
